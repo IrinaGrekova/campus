@@ -21,6 +21,8 @@ type ProfileScreenProp = NativeStackNavigationProp<
 export const Profile: FC = () => {
   const navigation = useNavigation<ProfileScreenProp>();
 
+  
+
   return (
     <Stack w="100%" h="100%">
       <Box

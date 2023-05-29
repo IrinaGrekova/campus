@@ -1,51 +1,14 @@
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// import axios from 'axios';
+import axios from 'axios';
+import { Buffer } from 'buffer';
+import {useAuthStore} from '../store/useAuthStore';
+
+export const apiHostToken = 'http://localhost:5000/api/v1/auth/signin';
+export const apiHostUser = 'http://localhost:5001/api/v1/internal/users';
 
 
-// const BASE_URL = 'http://localhost:5000';
+export const login = (email: string, password: string) =>
+  axios.post(apiHostToken, { loginOrEmail: email, password: password });
 
-// interface AuthResponse {
-//   data: {
-//     user: {
-//       id: string;
-//       email: string;
-//     };
-//     accessToken: string; 
-//   };
-// }
+export const getUser = (userId: number, accessToken: string) =>
+  axios.get(`${apiHostUser}/${userId}`, { headers: { Authorization: `Bearer ${accessToken}` }});
 
-// interface AccessTokenData {
-//     userId: string;
-//     email: string;
-//     exp: number; // добавим свойство exp
-//   }
-
-// export const login = async (email: string, password: string) => {
-//     const response = await axios.post<AuthResponse>(`${BASE_URL}/api/v1/auth/signin`, {
-//       loginOrEmail: email,
-//       password: password,
-//     });
-  
-//     AsyncStorage.setItem('accessToken', response.data.data.accessToken);
-
-//     return response.data;
-//   };
-  
-//   export const logout = () => {
-//     AsyncStorage.removeItem('accessToken');
-//   };
-
-//   export const getTokenData = async () => {
-//     const accessToken = await AsyncStorage.getItem('accessToken');
-  
-//     if (!accessToken) {
-//       return null;
-//     }
-  
-//     const tokenData = JSON.parse(atob(accessToken.split('.')[1]));
-//     return tokenData as {
-//       userId: string;
-//       email: string;
-//       exp: number;
-//     };
-//   };

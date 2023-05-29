@@ -56,7 +56,7 @@ export const RestorePasswordElement: FC = () => {
                 <Input w={350} mb={6} placeholder="Адрес электронной почты" />
               </Box>
             </VStack>
-            <Pressable flex={1} w={320} >
+            <Pressable flex={1} w={320} onPress={() => navigation.navigate("SuccessSendingElement")}>
               {({isPressed}) => {
                 return (
                   <Box

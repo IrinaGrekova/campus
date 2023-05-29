@@ -3,6 +3,7 @@ import { useState, FC } from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import axios from 'axios';
+import {Buffer} from 'buffer';
 
 import {RootStackParamList} from '../../RootStackParams';
 import {Background} from '../Background/Background';
@@ -19,14 +20,18 @@ import {
   InputGroup,
   HStack,
   Heading,
-  WarningOutlineIcon,
   FormControl,
+  Collapse,
+  Alert,
+  IconButton,
+  CloseIcon,
 } from 'native-base';
 
 import {VisOffIcon} from '../../../assets/icons/VisOffIcon';
 import {VisIcon} from '../../../assets/icons/VisIcon';
 import {Pass} from '../Pass';
 import {useAuthStore} from '../../store/useAuthStore';
+
 
 type SignInScreenProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -39,42 +44,59 @@ type LoginKy = {
 
 export const SignInElement: FC = () => {
   const [show, setShow] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
-  const token = useAuthStore(state => state.accessToken);
+  const accessToken = useAuthStore(state => state.accessToken);
   const [memory, setMemory] = useState(false);
   const setToken = useAuthStore(state => state.login);
 
-  const navigation = useNavigation<SignInScreenProp>();
-
-  // const {login} = useAuthStore();
-
-  // const handleLogin = async () => {
-  //   await login(email, password);
-  // };
+  const navigation = useNavigation<SignInScreenProp>(); 
 
   const handleLogin = async (): Promise<void> => {
     try {
-      setError(false);
       const response = await axios.post<LoginKy>(
         'http://localhost:5000/api/v1/auth/signin',
         {
           loginOrEmail: email,
           password: password,
-        },
+        }, {
+          withCredentials: true
+        }
       );
       const {accessToken} = response.data;
+      const parts = accessToken
+        .split('.')
+        .map(part =>
+          Buffer.from(
+            part.replace(/-/g, '+').replace(/_/g, '/'),
+            'base64',
+          ).toString(),
+        );
+
+      const payload = JSON.parse(parts[1]);
+
+      const userId = payload.sub;
+
       console.log(accessToken);
-      setToken(accessToken, memory);
+      setToken(accessToken, memory, userId);
+
+
+      const userData = await axios.get(`http://localhost:5001/api/v1/internal/users/${userId}`)
+      const { firstName, lastName } = userData.data
+
+      console.log(firstName, lastName)
+
+
       if (accessToken) {
         navigation.replace('Profile');
       }
     } catch (error) {
-      setError(true);
+      setShowAlert(true);
       console.log(error);
     }
   };
+
 
   return (
     <>
@@ -90,17 +112,49 @@ export const SignInElement: FC = () => {
               <Box color="#EEF0F3">
                 <Heading>Войти</Heading>
               </Box>
+              <Collapse isOpen={showAlert}>
+                <Alert w="100%" status="error" mt={2}>
+                  <VStack space={2} flexShrink={1} w="100%">
+                    <HStack
+                      flexShrink={1}
+                      space={2}
+                      justifyContent="space-between">
+                      <HStack space={2} flexShrink={1}>
+                        <Alert.Icon mt="1" />
+                        <Text fontSize="md" color="coolGray.800">
+                          Неправильный логин или пароль
+                        </Text>
+                      </HStack>
+                      <IconButton
+                        variant="unstyled"
+                        _focus={{
+                          borderWidth: 0,
+                        }}
+                        icon={<CloseIcon size="3" />}
+                        _icon={{
+                          color: 'coolGray.600',
+                        }}
+                        onPress={() => setShowAlert(false)}
+                      />
+                    </HStack>
+                  </VStack>
+                </Alert>
+              </Collapse>
               <Box alignItems="center" flexDirection="column">
-                <InputGroup flexDirection="column" alignItems="center" mt={8}>
-                <FormControl isInvalid={error}>
-                  <Input
-                    type="text"
-                    placeholder="Адрес электронной почты"
-                    mb={6}
-                    value={email}
-                    onChangeText={text => setEmail(text)}
-                  />
-                  
+                <InputGroup
+                  w="100%"
+                  flexDirection="column"
+                  alignItems="center"
+                  mt={8}>
+                  <FormControl isInvalid={showAlert}>
+                    <Input
+                      type="text"
+                      placeholder="Адрес электронной почты"
+                      mb={6}
+                      value={email}
+                      onChangeText={text => setEmail(text)}
+                    />
+
                     <Input
                       placeholder="Пароль"
                       type={show ? 'text' : 'password'}
@@ -112,10 +166,6 @@ export const SignInElement: FC = () => {
                       value={password}
                       onChangeText={text => setPassword(text)}
                     />
-                    <FormControl.ErrorMessage
-                      leftIcon={<WarningOutlineIcon size="xs" />}>
-                      Не правильный логин или пароль
-                    </FormControl.ErrorMessage>
                   </FormControl>
                 </InputGroup>
                 <Link

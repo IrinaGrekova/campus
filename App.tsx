@@ -13,6 +13,8 @@ import {RestorePasswordElement} from './src/components/RestorePasswordElement/Re
 import {NewPasswordElement} from './src/components/NewPasswordElement/NewPasswordElement';
 import {Profile} from './src/components/Profile';
 import {Pass} from './src/components/Pass';
+import { SplashScreen } from './src/components/SplashScreen/SplashScreen';
+import { SuccessSendingElement } from './src/components/SuccessSendingElement';
 
 const App: FC = () => {
   const Stack = createNativeStackNavigator();
@@ -24,6 +26,7 @@ const App: FC = () => {
           screenOptions={{
             headerShown: false,
           }}>
+            <Stack.Screen name="SplashScreen" component={SplashScreen} />
           <Stack.Screen name="SignInElement" component={SignInElement} />
           <Stack.Screen
             name="RestorePasswordElement"
@@ -35,6 +38,7 @@ const App: FC = () => {
           />
           <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen name="Pass" component={Pass} />
+          <Stack.Screen name="SuccessSendingElement" component={SuccessSendingElement}/>
         </Stack.Navigator>
       </NavigationContainer>
     </NativeBaseProvider>
