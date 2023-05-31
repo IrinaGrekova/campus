@@ -1,9 +1,7 @@
 /* prettier-ignore */
-import { useState, FC } from 'react';
+import { useState, FC, useEffect } from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import axios from 'axios';
-import {Buffer} from 'buffer';
 
 import {RootStackParamList} from '../../RootStackParams';
 import {Background} from '../Background/Background';
@@ -29,74 +27,44 @@ import {
 
 import {VisOffIcon} from '../../../assets/icons/VisOffIcon';
 import {VisIcon} from '../../../assets/icons/VisIcon';
-import {Pass} from '../Pass';
+import { Profile } from '../Profile';
 import {useAuthStore} from '../../store/useAuthStore';
-
 
 type SignInScreenProp = NativeStackNavigationProp<
   RootStackParamList,
   'SignInElement'
 >;
 
-type LoginKy = {
-  accessToken: string;
-};
 
 export const SignInElement: FC = () => {
   const [show, setShow] = useState(false);
-  const [showAlert, setShowAlert] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const accessToken = useAuthStore(state => state.accessToken);
+  const loginRequestStatus = useAuthStore(state => state.loginRequestStatus);
   const [memory, setMemory] = useState(false);
-  const setToken = useAuthStore(state => state.login);
-
-  const navigation = useNavigation<SignInScreenProp>(); 
-
-  const handleLogin = async (): Promise<void> => {
-    try {
-      const response = await axios.post<LoginKy>(
-        'http://localhost:5000/api/v1/auth/signin',
-        {
-          loginOrEmail: email,
-          password: password,
-        }, {
-          withCredentials: true
-        }
-      );
-      const {accessToken} = response.data;
-      const parts = accessToken
-        .split('.')
-        .map(part =>
-          Buffer.from(
-            part.replace(/-/g, '+').replace(/_/g, '/'),
-            'base64',
-          ).toString(),
-        );
-
-      const payload = JSON.parse(parts[1]);
-
-      const userId = payload.sub;
-
-      console.log(accessToken);
-      setToken(accessToken, memory, userId);
+  const loginRequest = useAuthStore(state => state.loginRequest);
+  const resetLoginRequestStatus = useAuthStore(
+    state => state.resetLoginRequestStatus,
+  );
+  const currentUser = useAuthStore(state => state.currentUser);
 
 
-      const userData = await axios.get(`http://localhost:5001/api/v1/internal/users/${userId}`)
-      const { firstName, lastName } = userData.data
+  const navigation = useNavigation<SignInScreenProp>();
 
-      console.log(firstName, lastName)
-
-
-      if (accessToken) {
-        navigation.replace('Profile');
-      }
-    } catch (error) {
-      setShowAlert(true);
-      console.log(error);
-    }
+  const handleLogin = () => {
+    loginRequest(email, password, memory);
+    setEmail('');
+    setPassword('');
   };
+  useEffect(() => {
+      if (currentUser) {
+        navigation.replace('Profile');
+        
+      }
+  }, [currentUser]);
 
+  
 
   return (
     <>
@@ -112,7 +80,7 @@ export const SignInElement: FC = () => {
               <Box color="#EEF0F3">
                 <Heading>Войти</Heading>
               </Box>
-              <Collapse isOpen={showAlert}>
+              <Collapse isOpen={loginRequestStatus === 'error'}>
                 <Alert w="100%" status="error" mt={2}>
                   <VStack space={2} flexShrink={1} w="100%">
                     <HStack
@@ -134,7 +102,7 @@ export const SignInElement: FC = () => {
                         _icon={{
                           color: 'coolGray.600',
                         }}
-                        onPress={() => setShowAlert(false)}
+                        onPress={() => resetLoginRequestStatus()}
                       />
                     </HStack>
                   </VStack>
@@ -146,7 +114,7 @@ export const SignInElement: FC = () => {
                   flexDirection="column"
                   alignItems="center"
                   mt={8}>
-                  <FormControl isInvalid={showAlert}>
+                  <FormControl>
                     <Input
                       type="text"
                       placeholder="Адрес электронной почты"
@@ -204,7 +172,7 @@ export const SignInElement: FC = () => {
               h={56}
               mt={8}
               ml={3}
-              onPress={handleLogin}>
+              onPressOut={handleLogin}>
               {({isPressed}) => {
                 return (
                   <Box

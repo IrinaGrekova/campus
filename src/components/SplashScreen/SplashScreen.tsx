@@ -18,7 +18,7 @@ export const SplashScreen: FC = () => {
 useEffect(() => {
     setTimeout(() => {
         navigation.navigate('SignInElement')
-    }, 3000)
+    }, 2000)
 }, [])
 
   return (

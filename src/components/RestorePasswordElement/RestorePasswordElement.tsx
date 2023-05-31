@@ -1,5 +1,5 @@
 /* prettier-ignore */
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../RootStackParams';
@@ -23,6 +23,8 @@ type RestorePasswordScreenProp = NativeStackNavigationProp<
 
 export const RestorePasswordElement: FC = () => {
   const navigation = useNavigation<RestorePasswordScreenProp>();
+
+  const [userEmail, setUserEmail] = useState('')
 
   return (
     <>
@@ -53,7 +55,7 @@ export const RestorePasswordElement: FC = () => {
                 вашей электронной почты
               </Box>
               <Box alignItems="center" flexDirection="column">
-                <Input w={350} mb={6} placeholder="Адрес электронной почты" />
+                <Input w={350} mb={6} placeholder="Адрес электронной почты" value={userEmail} onChangeText={text => setUserEmail(text)}/>
               </Box>
             </VStack>
             <Pressable flex={1} w={320} onPress={() => navigation.navigate("SuccessSendingElement")}>

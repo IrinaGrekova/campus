@@ -2,6 +2,7 @@ import React, {FC} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../RootStackParams';
+import {useAuthStore} from '../../store/useAuthStore';
 import {
   Image,
   Box,
@@ -21,7 +22,8 @@ type ProfileScreenProp = NativeStackNavigationProp<
 export const Profile: FC = () => {
   const navigation = useNavigation<ProfileScreenProp>();
 
-  
+  const currentUser = useAuthStore(state => state.currentUser);
+
 
   return (
     <Stack w="100%" h="100%">
@@ -61,8 +63,8 @@ export const Profile: FC = () => {
         </Box>
       </Center>
       <VStack space={8} mt={8} marginX={6}>
-        <Box>Ефремова Альбина Денисовна</Box>
-        <Box>+7 (906) 555-01-33</Box>
+        {/* <Box>{`${} ${} ${}`}</Box>
+        <Box>{}</Box> */}
         <Box>МГМСУ/Клиническая психология/1 курс/1.3-Б1/Б</Box>
         <Box>
           РГСУ/Социальной работы магистратура (заочное отделение)/3 курс/1.2
