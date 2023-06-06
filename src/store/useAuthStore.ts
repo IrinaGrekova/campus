@@ -1,25 +1,27 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import axios, { CanceledError } from 'axios';
-import { Buffer } from 'buffer';
+import axios from 'axios';
+import { getUserId } from '../shared/utils/getUserId';
+
 
 
 
 type AuthStoreType = {
   accessToken: Promise<string | null>;
-  memory : boolean;
   userId: Promise<string | null>;
   loginRequestStatus: "initial" | "loading" | "success" | "error";
+  getUserInfoStatus: "initial" | "loading" | "success" | "error";
   currentUser: CurrentUser | null;
 };
 
 type AuthActionsType = {
-  login: (accessToken: string, memory: boolean, userId: string) => void;
+  login: (accessToken: string, userId: string) => void;
   logout: () => void;
-  loginRequest: (email: string, password: string, memory: boolean) => Promise<void>;
+  loginRequest: (email: string, password: string) => Promise<void>;
   resetLoginRequestStatus: () => void;
-  getUserData: (currentUser: CurrentUser) => void;
+  setUserData: (currentUser: CurrentUser) => void;
+  getUserInfo: (accessToken: string) => void;
 };
 export type CurrentUser = {
   id: string,
@@ -46,15 +48,14 @@ export const useAuthStore = create<AuthStoreType & AuthActionsType>()(
       userId: AsyncStorage.getItem('userId') || null,
       loginRequestStatus: "initial",
       currentUser: null,
+      getUserInfoStatus: "initial",
       // синхронные экшены
-      login: (accessToken, memory, userId) => {
+      login: (accessToken, userId) => {
         set((state) => ({
             ...state,
             accessToken,
-            memory,
             userId
         }));
-        (!memory && AsyncStorage.setItem("accessToken", accessToken));
       },
       logout: () => {
         set(() => ({accessToken: ''}));
@@ -63,14 +64,9 @@ export const useAuthStore = create<AuthStoreType & AuthActionsType>()(
       resetLoginRequestStatus: () => {
         set((state) => ({...state, loginRequestStatus: "initial"}))
       },
-      getUserData: (currentUser) => {
-        set((state) => ({
-          ...state, 
-          currentUser
-        }));
-      },
+      setUserData: currentUser => set({currentUser}),
       // асинхронные экшены
-      loginRequest: async (email: string, password: string, memory: boolean) => {
+      loginRequest: async (email: string, password: string) => {
 
         set((state) => {state.loginRequestStatus = "loading"});
         try {
@@ -83,46 +79,44 @@ export const useAuthStore = create<AuthStoreType & AuthActionsType>()(
               withCredentials: true
             }
           );
-          const {accessToken} = response.data;
-          const parts = accessToken
-            .split('.')
-            .map(part =>
-              Buffer.from(
-                part.replace(/-/g, '+').replace(/_/g, '/'),
-                'base64',
-              ).toString(),
-            );
-    
-          const payload = JSON.parse(parts[1]);
-    
-          const userId = payload.sub;
-    
-          // console.log(accessToken);
-          set((state: AuthActionsType) => {
-            state.login(accessToken, memory, userId)
-          });
-          
-    
-          const userData = await axios.get(`http://localhost:5001/api/v1/internal/users/${userId}`);
-          const { ...currentUser } = userData.data;
-
-          
-
-          set((state: AuthActionsType) => {
-            state.getUserData({...currentUser})
-          });
-          
 
           set((state) => {state.loginRequestStatus = "success"});
+
+          const {accessToken} = response.data;
+          AsyncStorage.setItem("accessToken", accessToken);
+
+         set((state) => {
+          state.getUserInfo(accessToken)
+         });
           
         } catch (error) {
           set((state) => {state.loginRequestStatus = "error"});
           console.log(error);
         }
-      }
-    })),
+      },
+      getUserInfo: async (accessToken: string) => {
+        try{
+          set((state) => {state.getUserInfoStatus = "loading"});
 
+          const userId = getUserId(accessToken);
+          const response = await axios
+            .get(`http://localhost:5001/api/v1/internal/users/${userId}`)
+          const currentUser = response.data;
+          set((state: AuthActionsType) => {
+            state.setUserData(currentUser);
+            console.log(currentUser);
+            console.log(currentUser.firstName);
+          });
+          set((state) => {state.getUserInfoStatus = "success"});
+        }catch(error){
+          console.log(error);
+          set((state) => {state.getUserInfoStatus = "error"})
+        }
+      },
+    })),
 );
+
+
 
 
 
