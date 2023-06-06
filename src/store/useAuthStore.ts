@@ -64,7 +64,11 @@ export const useAuthStore = create<AuthStoreType & AuthActionsType>()(
       resetLoginRequestStatus: () => {
         set((state) => ({...state, loginRequestStatus: "initial"}))
       },
-      setUserData: currentUser => set({currentUser}),
+      setUserData: (currentUser) => {set((state) => {
+        (state.currentUser = currentUser);
+      });
+        
+      },
       // асинхронные экшены
       loginRequest: async (email: string, password: string) => {
 
@@ -102,10 +106,8 @@ export const useAuthStore = create<AuthStoreType & AuthActionsType>()(
           const response = await axios
             .get(`http://localhost:5001/api/v1/internal/users/${userId}`)
           const currentUser = response.data;
-          set((state: AuthActionsType) => {
-            state.setUserData(currentUser);
-            console.log(currentUser);
-            console.log(currentUser.firstName);
+          set((state: AuthStoreType) => {
+            state.currentUser = currentUser;
           });
           set((state) => {state.getUserInfoStatus = "success"});
         }catch(error){
@@ -115,9 +117,6 @@ export const useAuthStore = create<AuthStoreType & AuthActionsType>()(
       },
     })),
 );
-
-
-
 
 
 

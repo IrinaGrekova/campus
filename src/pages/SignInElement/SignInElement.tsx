@@ -43,7 +43,7 @@ export const SignInElement: FC = () => {
   };
   useEffect(() => {
     if (currentUser) {
-      navigation.replace(RoutesEnum.PROFILE);
+      navigation.navigate(RoutesEnum.PROFILE);
     }
   }, [currentUser]);
 
