@@ -1,23 +1,59 @@
 /* prettier-ignore */
-import { useState, FC } from 'react';
+import { useState, FC, useEffect } from 'react';
+import {RouteParamsList, RoutesEnum} from '../../shared/types';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useNavigation} from '@react-navigation/native';
+
 import {
   Box,
   Pressable,
   Stack,
   Text,
+  HStack,
+  IconButton,
+  Alert,
   ZStack,
   VStack,
   Input,
   InputGroup,
   Heading,
   Image,
+  Collapse,
+  CloseIcon,
 } from 'native-base';
 
 import {VisOffIcon} from '../../shared/ui/icons/VisOffIcon';
 import {VisIcon} from '../../shared/ui/icons/VisIcon';
+import {AlertMessageNewPassword} from './AlertMessageNewPassword';
+
+type Props = NativeStackNavigationProp<
+  RouteParamsList,
+  RoutesEnum.NEW_PASSWORD
+>;
 
 export const NewPasswordElement: FC = () => {
   const [show, setShow] = useState(false);
+  const [showReplay, setShowReplay] = useState(false);
+  const [showError, setShowError] = useState(false);
+
+  const [validation, setValidation] = useState(false);
+
+  const navigation = useNavigation<Props>();
+
+  const [password, setPassword] = useState('');
+  const [passwordRepeat, setPasswordRepeat] = useState('');
+
+  const submitNewPassword = () => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$/;
+
+    if (password.length < 8 || !regex.test(password)) {
+      setValidation(true);
+    } else if (password != passwordRepeat) {
+      setShowError(true);
+    } else {
+      navigation.navigate(RoutesEnum.SIGNIN);
+    }
+  };
 
   return (
     <>
@@ -57,8 +93,36 @@ export const NewPasswordElement: FC = () => {
               <Box color="#EEF0F3">
                 <Heading>Введите новый пароль</Heading>
               </Box>
+              <Collapse isOpen={showError} mt={2} h={16} justifyContent="space-around">
+                <Alert status="error" w={350}>
+                  <HStack space={32} justifyContent="space-evenly">
+                    <HStack alignItems="center" space={1} >
+                      <Alert.Icon />
+                      <Box>
+                        <Text
+                          _dark={{
+                            color: 'coolGray.800',
+                          }}>
+                          Пароли не совпадают
+                        </Text>
+                      </Box>
+                    </HStack>
+                    <IconButton
+                      _focus={{
+                        borderWidth: 0,
+                      }}
+                      icon={<CloseIcon size="3" />}
+                      _icon={{
+                        color: 'coolGray.600',
+                      }}
+                      variant="unstyled"
+                      onPress={() => setShowError(false)}
+                    />
+                  </HStack>
+                </Alert>
+              </Collapse>
               <Box alignItems="center" flexDirection="column">
-                <InputGroup flexDirection="column" alignItems="center" mt={6}>
+                <InputGroup flexDirection="column" alignItems="center" mt={4}>
                   <Input
                     placeholder="Новый пароль"
                     type={show ? 'text' : 'password'}
@@ -67,21 +131,58 @@ export const NewPasswordElement: FC = () => {
                         {show ? <VisIcon /> : <VisOffIcon />}
                       </Pressable>
                     }
+                    value={password}
+                    onChangeText={text => setPassword(text)}
                   />
+
                   <Input
                     placeholder="Подтверждение пароля"
-                    mt={2}
-                    type={show ? 'text' : 'password'}
+                    mt={4}
+                    type={showReplay ? 'text' : 'password'}
                     InputRightElement={
-                      <Pressable onPress={() => setShow(!show)}>
-                        {show ? <VisIcon /> : <VisOffIcon />}
+                      <Pressable onPress={() => setShowReplay(!showReplay)}>
+                        {showReplay ? <VisIcon /> : <VisOffIcon />}
                       </Pressable>
                     }
+                    value={passwordRepeat}
+                    onChangeText={text => setPasswordRepeat(text)}
                   />
                 </InputGroup>
+                <Collapse isOpen={validation}>
+                  <HStack alignItems="center">
+                    <Text color="#FF121C">
+                      Пароль не соответствует требованиям безопасности:
+                    </Text>
+                    <IconButton
+                      variant="unstyled"
+                      icon={<CloseIcon size="3" />}
+                      _icon={{
+                        color: '#FF121C',
+                      }}
+                      ml={4}
+                      mb={2}
+                      onPress={() => setValidation(false)}
+                    />
+                  </HStack>
+                  <VStack flexDirection="column">
+                    <Text color="#FF121C">
+                      - Состоять из 8 и более символов
+                    </Text>
+                    <Text color="#FF121C">
+                      - Содержать прописные латинские буквы
+                    </Text>
+                    <Text color="#FF121C">
+                      - Содержать строчные латинские буквы
+                    </Text>
+                    <Text color="#FF121C">- Содержать цифры</Text>
+                    <Text color="#FF121C">
+                      - Сщдержать знаки пунктуации (!@$%()+,-/:;&@{}^_~)
+                    </Text>
+                  </VStack>
+                </Collapse>
               </Box>
             </VStack>
-            <Pressable flex={1} w="100%" mt={4}>
+            <Pressable flex={1} w="100%" mt={4} onPressOut={submitNewPassword}>
               {({isPressed}) => {
                 return (
                   <Box

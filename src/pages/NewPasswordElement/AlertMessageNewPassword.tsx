@@ -1,24 +1,24 @@
-import {VStack, HStack, IconButton, CloseIcon, Alert, Box} from 'native-base';
+import {VStack, HStack, IconButton, CloseIcon,Alert, Box} from 'native-base';
 import {FC} from 'react';
 import {useAuthStore} from '../../store/useAuthStore';
-import {Text} from '../../shared/ui';
+import { Text } from '../../shared/ui';
 
-export const AlertMessage: FC = () => {
-  const resetLoginRequestStatus = useAuthStore(
-    state => state.resetLoginRequestStatus,
-  );
+export const AlertMessageNewPassword: FC = () => {
+
+
+
 
   return (
-    <Alert status="error">
-      <HStack h={6} space={4} alignItems="center">
-        <HStack space={2}>
+<Alert status="error" w={350}>
+      <HStack h={6} space={24} alignItems="center">
+        <HStack space={4}>
           <Alert.Icon />
           <Box>
             <Text
               _dark={{
                 color: 'coolGray.800',
               }}>
-              Не правильный логин или пароль
+              Пароли не совпадают
             </Text>
           </Box>
         </HStack>
@@ -30,8 +30,7 @@ export const AlertMessage: FC = () => {
           _icon={{
             color: 'coolGray.600',
           }}
-          variant="unstyled"
-          onPress={() => resetLoginRequestStatus()}
+          onPress={() => {}}
         />
       </HStack>
     </Alert>
